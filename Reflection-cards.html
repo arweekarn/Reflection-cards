@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Team Reflection Card Deck</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f0; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 2rem 1rem; }
+  .container { width: 100%; max-width: 680px; }
+  .top-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; flex-wrap: wrap; gap: 8px; }
+  .lang-toggle { display: flex; gap: 6px; }
+  .lang-btn { font-size: 12px; padding: 4px 12px; border-radius: 8px; border: 0.5px solid #ccc; background: transparent; color: #666; cursor: pointer; font-family: inherit; }
+  .lang-btn.active { background: #e8e8e8; color: #111; border-color: #aaa; }
+  .shuffle-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; padding: 8px 14px; border-radius: 8px; border: 0.5px solid #ccc; background: transparent; color: #666; cursor: pointer; font-family: inherit; }
+  .shuffle-btn:hover { background: #e8e8e8; }
+  .progress-bg { height: 3px; background: #ddd; border-radius: 2px; margin-bottom: 1.25rem; }
+  .progress-fill { height: 3px; background: #378ADD; border-radius: 2px; transition: width 0.3s ease; }
+  .section-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 4px 12px; border-radius: 8px; margin-bottom: 1rem; }
+  .badge-tip    { background: #EAF3DE; color: #3B6D11; }
+  .badge-safety { background: #FAECE7; color: #993C1D; }
+  .badge-team   { background: #E6F1FB; color: #0C447C; }
+  .badge-leader { background: #EEEDFE; color: #3C3489; }
+  .card { border-radius: 12px; padding: 2rem; min-height: 340px; display: flex; flex-direction: column; position: relative; overflow: hidden; }
+  .bg-green  { background: #EAF3DE; }
+  .bg-coral  { background: #FAECE7; }
+  .bg-blue   { background: #E6F1FB; }
+  .bg-purple { background: #EEEDFE; }
+  .card-accent { position: absolute; top: 0; left: 0; right: 0; height: 4px; }
+  .accent-green  { background: #639922; }
+  .accent-coral  { background: #D85A30; }
+  .accent-blue   { background: #378ADD; }
+  .accent-purple { background: #7F77DD; }
+  .card-num { font-size: 12px; margin-bottom: 0.5rem; margin-top: 0.5rem; }
+  .card-num-blue   { color: #185FA5; }
+  .card-num-purple { color: #534AB7; }
+  .card-title { font-size: 20px; font-weight: 500; margin: 0 0 1rem; line-height: 1.3; }
+  .card-title-th { font-size: 16px; font-weight: 500; margin: 0.25rem 0 1rem; line-height: 1.4; }
+  .card-body { font-size: 15px; line-height: 1.7; margin: 0 0 0.75rem; }
+  .card-prompt { font-size: 14px; line-height: 1.6; font-style: italic; margin: 0 0 0.75rem; }
+  .divider { border: none; border-top: 0.5px solid rgba(0,0,0,0.12); margin: 1.25rem 0; }
+  .leader-note { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #3C3489; background: rgba(127,119,221,0.15); border-radius: 8px; padding: 4px 10px; margin-bottom: 1rem; }
+  .nav-row { display: flex; align-items: center; justify-content: space-between; margin-top: 1.25rem; gap: 8px; }
+  .nav-btn { display: flex; align-items: center; gap: 6px; font-size: 14px; padding: 8px 16px; border-radius: 8px; border: 0.5px solid #ccc; background: transparent; color: #111; cursor: pointer; font-family: inherit; }
+  .nav-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .nav-btn:hover:not(:disabled) { background: #e8e8e8; }
+  .card-counter { font-size: 13px; color: #666; }
+  svg.icon { width: 16px; height: 16px; vertical-align: -2px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="top-row">
+    <div class="lang-toggle">
+      <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+      <button class="lang-btn" id="btn-th" onclick="setLang('th')">TH</button>
+      <button class="lang-btn" id="btn-both" onclick="setLang('both')">Both</button>
+    </div>
+    <button class="shuffle-btn" onclick="shuffleToRandom()">
+      &#x21C4; Random card
+    </button>
+  </div>
+
+  <div class="progress-bg"><div class="progress-fill" id="progress"></div></div>
+  <div id="section-badge"></div>
+  <div id="card" class="card"></div>
+
+  <div class="nav-row">
+    <button class="nav-btn" id="btn-prev" onclick="go(-1)">&#8592; Previous</button>
+    <span class="card-counter" id="counter"></span>
+    <button class="nav-btn" id="btn-next" onclick="go(1)">Next &#8594;</button>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   CARD CONTENT — edit the text values below to adjust wording
+   ============================================================ */
+const cards = [
+  { section: 'purpose' },
+  { section: 'safety' },
+  {
+    section: 'team', num: 1,
+    /* --- Card 1 --- */
+    titleEn: 'Navigating the unexpected',
+    titleTh: 'การรับมือกับสิ่งที่ไม่คาดคิด',
+    bodyEn: 'How did we handle uncertainty, unexpected turns, or surprises?',
+    bodyTh: 'เราทำอย่างไรเมื่อต้องเผชิญกับความไม่แน่นอน สิ่งที่ไม่เป็นไปตามแผน หรือเรื่องที่ทำให้ประหลาดใจ?',
+    promptEn: 'Think back to a moment of surprise: Did you stay grounded, ask the right questions, or pivot smoothly? What did you notice about your own mindset?',
+    promptTh: 'ลองนึกถึงตอนที่เกิดเหตุการณ์ไม่คาดฝัน: คุณยังควบคุมสติได้ดี ตั้งคำถามที่ตรงประเด็น หรือปรับเปลี่ยนแผนงานได้ทันท่วงทีหรือไม่? คุณสังเกตเห็นอะไรเกี่ยวกับวิธีคิดของตัวเองในตอนนั้นบ้าง?'
+  },
+  {
+    section: 'team', num: 2,
+    /* --- Card 2 --- */
+    titleEn: 'Stakeholder centricity & engagement',
+    titleTh: 'การใส่ใจและเข้าถึงผู้มีส่วนได้ส่วนเสีย',
+    bodyEn: 'What was our posture toward our stakeholders (e.g., clients, partners, or internal teams) in this situation?',
+    bodyTh: 'ท่าทีหรือจุดยืนของเราที่มีต่อผู้มีส่วนได้ส่วนเสีย (เช่น ลูกค้า พันธมิตร หรือทีมงานภายใน) ในสถานการณ์นี้เป็นอย่างไร?',
+    promptEn: 'Did we listen more than we explained? Did we acknowledge their needs or anxieties before rushing to a solution? What would they say about our attitude?',
+    promptTh: 'เราเป็นฝ่ายรับฟังมากกว่าพยายามอธิบายหรือเปล่า? เรารับรู้และเข้าใจความต้องการหรือความกังวลของพวกเขาก่อนที่จะรีบเสนอทางแก้ไขไหม? คิดว่าพวกเขาจะพูดถึงทัศนคติของเราว่าอย่างไร?'
+  },
+  {
+    section: 'team', num: 3,
+    /* --- Card 3 --- */
+    titleEn: 'Collaboration & alignment',
+    titleTh: 'การทำงานร่วมกันและการปรับตัวให้สอดคล้อง',
+    bodyEn: 'How effectively did we collaborate with partners, leaders, or fellow team members?',
+    bodyTh: 'เราทำงานร่วมกับพาร์ทเนอร์ ผู้นำ หรือเพื่อนร่วมทีมด้วยกันเองได้ดีแค่ไหน?',
+    promptEn: 'When others stepped into leadership or presented an unexpected approach, how did you react? Were you collaborative and adaptable, or did you notice yourself becoming defensive?',
+    promptTh: 'เมื่อมีคนอื่นขึ้นมาเป็นผู้นำ หรือเมื่อมีแนวคิดที่ต่างไปจากที่คุณคาดไว้ คุณมีปฏิกิริยาอย่างไร? คุณพร้อมร่วมมือและปรับตัว หรือพบว่าตัวเองเริ่มแสดงท่าทีปกป้องตัวเอง?'
+  },
+  {
+    section: 'team', num: 4,
+    /* --- Card 4 --- */
+    titleEn: 'The "rewind" moment',
+    titleTh: 'ช่วงเวลาที่อยากย้อนกลับไปแก้ไข',
+    bodyEn: 'If you could rewind the clock on a specific interaction or decision, what would you do differently—and why?',
+    bodyTh: 'หากคุณสามารถย้อนเวลากลับไปแก้ไขการปฏิสัมพันธ์หรือการตัดสินใจหนึ่งๆ ได้ คุณจะทำอะไรให้ต่างไปจากเดิม—และเพราะอะไร?',
+    promptEn: 'The goal isn\'t to dwell on mistakes, but to notice how your instincts should shift next time. What was happening in that moment?',
+    promptTh: 'เป้าหมายไม่ใช่การจมอยู่กับความผิดพลาด แต่เพื่อให้สังเกตว่าสัญชาตญาณของคุณควรจะเปลี่ยนไปอย่างไรในครั้งหน้า เกิดอะไรขึ้นในสถานการณ์ตอนนั้น?'
+  },
+  {
+    section: 'team', num: 5,
+    /* --- Card 5 --- */
+    titleEn: 'Professional growth',
+    titleTh: 'การเติบโตในฐานะมืออาชีพ',
+    bodyEn: 'What is one thing you learned about yourself as a professional through this experience?',
+    bodyTh: 'สิ่งหนึ่งที่คุณได้เรียนรู้เกี่ยวกับตัวเองในฐานะมืออาชีพจากประสบการณ์ครั้งนี้คืออะไร?',
+    promptEn: 'Look beyond technical skills or processes—reflect on how you interacted with people, handled pressure, or approached problem-solving.',
+    promptTh: 'มองข้ามเรื่องเทคนิคหรือกระบวนการทำงานไปก่อน—ลองทบทวนวิธีที่คุณปฏิสัมพันธ์กับผู้คน การรับมือกับความกดดัน หรือวิธีคิดวิเคราะห์เพื่อแก้ปัญหา'
+  },
+  {
+    section: 'leader', num: 6,
+    /* --- Card 6 (leaders) --- */
+    titleEn: 'Team strengths & wins',
+    titleTh: 'จุดแข็งและความสำเร็จของทีม',
+    bodyEn: 'What did the team do exceptionally well in this situation?',
+    bodyTh: 'ทีมทำสิ่งใดได้ดีเยี่ยมในสถานการณ์นี้?',
+    promptEn: 'Look for moments where they showed professional presence, solid judgment, seamless collaboration, or resilience under pressure.',
+    promptTh: 'ลองมองหาจังหวะที่พวกเขาแสดงให้เห็นถึงความเป็นมืออาชีพ การตัดสินใจที่ดี ความร่วมมือร่วมใจที่ไร้รอยต่อ หรือความยืดหยุ่นภายใต้ความกดดัน'
+  },
+  {
+    section: 'leader', num: 7,
+    /* --- Card 7 (leaders) --- */
+    titleEn: 'Opportunities for growth',
+    titleTh: 'โอกาสในการเติบโตและพัฒนา',
+    bodyEn: 'Where does the team need to grow, and what concrete support do they need to get there?',
+    bodyTh: 'จุดไหนที่ทีมจำเป็นต้องพัฒนาเพิ่มขึ้น และพวกเขาต้องการการสนับสนุนที่เป็นรูปธรรมอย่างไร?',
+    promptEn: 'Move past fault-finding: Where did they stumble, where professional training, mentorship, or the right support would make a massive difference next time?',
+    promptTh: 'ก้าวข้ามการจับผิด: มีจุดไหนที่พวกเขาติดขัด ซึ่งหากได้รับการฝึกฝน คำแนะนำ หรือการสนับสนุนที่ถูกต้อง จะช่วยสร้างความเปลี่ยนแปลงได้อย่างมหาศาลในครั้งต่อไป?'
+  }
+];
+
+/* ============================================================
+   PURPOSE CARD — edit text here
+   ============================================================ */
+const purposeEn = {
+  title: 'Welcome to your reflection',
+  body1: 'These cards are here to help you slow down, look back honestly, and grow — as an individual, and as part of a team.',
+  body2: 'There are no right or wrong answers here. Only genuine ones.',
+  prompt: 'Keep it brief. A few sentences rooted in real feeling and observation are worth far more than a lengthy, polished report.'
+};
+const purposeTh = {
+  title: 'ยินดีต้อนรับสู่การสะท้อนคิดของคุณ',
+  body1: 'การ์ดชุดนี้จัดทำขึ้นเพื่อช่วยให้คุณหยุดพัก มองย้อนกลับอย่างตรงไปตรงมา และเติบโต — ในฐานะบุคคล และในฐานะส่วนหนึ่งของทีม',
+  body2: 'ที่นี่ไม่มีคำตอบที่ถูกหรือผิด มีแต่คำตอบที่จริงใจ',
+  prompt: 'ไม่จำเป็นต้องตอบยาว ขอเพียงไม่กี่ประโยคที่กลั่นกรองมาจากความรู้สึกและข้อเท็จจริง ก็มีค่ามากกว่ารายงานที่เขียนอย่างสวยหรูยาวเหยียด'
+};
+
+/* ============================================================
+   SAFETY CARD — edit text here
+   ============================================================ */
+const safetyEn = {
+  title: 'This is a safe space',
+  body1: 'Reflection works best when we feel safe to be honest. This means speaking from your own experience, listening without judgement, and leaving room for others — and yourself — to be imperfect.',
+  body2: 'What\'s shared in this reflection stays within the team. The goal is growth, not evaluation.',
+  prompt: 'Approach each question with curiosity, not criticism.'
+};
+const safetyTh = {
+  title: 'นี่คือพื้นที่ที่ปลอดภัย',
+  body1: 'การสะท้อนคิดจะได้ผลดีที่สุดเมื่อเรารู้สึกปลอดภัยพอที่จะพูดความจริง นั่นหมายความว่า พูดจากประสบการณ์ของตัวเอง ฟังโดยไม่ตัดสิน และเปิดพื้นที่ให้คนอื่น — รวมถึงตัวเอง — ได้มีความไม่สมบูรณ์บ้าง',
+  body2: 'สิ่งที่แบ่งปันในการสะท้อนคิดครั้งนี้อยู่ภายในทีม เป้าหมายคือการเติบโต ไม่ใช่การประเมิน',
+  prompt: 'เข้าหาแต่ละคำถามด้วยความอยากรู้อยากเห็น ไม่ใช่การวิจารณ์'
+};
+
+/* ============================================================
+   APP LOGIC — no need to edit below this line
+   ============================================================ */
+let current = 0;
+let lang = 'en';
+
+function setLang(l) {
+  lang = l;
+  ['en','th','both'].forEach(x => document.getElementById('btn-'+x).classList.toggle('active', x===l));
+  render();
+}
+
+function go(d) {
+  current = Math.max(0, Math.min(cards.length-1, current+d));
+  render();
+}
+
+function shuffleToRandom() {
+  const idxs = cards.map((c,i) => c.section==='team' ? i : -1).filter(i => i>=0);
+  current = idxs[Math.floor(Math.random()*idxs.length)];
+  render();
+}
+
+function renderIntroCard(bg, accent, colors, enData, thData, badgeClass, badgeLabel) {
+  document.getElementById('section-badge').innerHTML =
+    `<span class="section-badge ${badgeClass}">${badgeLabel}</span>`;
+  const card = document.getElementById('card');
+  card.className = `card ${bg}`;
+
+  const buildBlock = (d, col) =>
+    `<p class="card-title" style="color:${col.title}">${d.title}</p>
+     <p class="card-body" style="color:${col.body}">${d.body1}</p>
+     <p class="card-body" style="color:${col.body}">${d.body2}</p>
+     <p class="card-prompt" style="color:${col.prompt}">${d.prompt}</p>`;
+
+  let html = `<div class="card-accent ${accent}"></div>`;
+  if (lang==='en')   html += buildBlock(enData, colors);
+  else if (lang==='th') html += buildBlock(thData, colors);
+  else html += buildBlock(enData, colors) + '<hr class="divider">' + buildBlock(thData, colors);
+  card.innerHTML = html;
+}
+
+function render() {
+  const c = cards[current];
+  const total = cards.length;
+
+  document.getElementById('progress').style.width = Math.round(((current+1)/total)*100)+'%';
+  document.getElementById('counter').textContent = (current+1)+' / '+total;
+  document.getElementById('btn-prev').disabled = current===0;
+  document.getElementById('btn-next').disabled = current===total-1;
+
+  if (c.section==='purpose') {
+    renderIntroCard('bg-green','accent-green',
+      { title:'#27500A', body:'#3B6D11', prompt:'#639922' },
+      purposeEn, purposeTh, 'badge-tip', '&#x1F4A1; Before you begin');
+    return;
+  }
+
+  if (c.section==='safety') {
+    renderIntroCard('bg-coral','accent-coral',
+      { title:'#712B13', body:'#993C1D', prompt:'#D85A30' },
+      safetyEn, safetyTh, 'badge-safety', '&#x2764; Psychological safety');
+    return;
+  }
+
+  const isLeader = c.section==='leader';
+  const bg      = isLeader ? 'bg-purple' : 'bg-blue';
+  const accent  = isLeader ? 'accent-purple' : 'accent-blue';
+  const titleCol  = isLeader ? '#26215C' : '#042C53';
+  const bodyCol   = isLeader ? '#534AB7' : '#185FA5';
+  const promptCol = isLeader ? '#7F77DD' : '#378ADD';
+  const numCls    = isLeader ? 'card-num-purple' : 'card-num-blue';
+
+  document.getElementById('section-badge').innerHTML = isLeader
+    ? '<span class="section-badge badge-leader">&#x1F6E1; For leaders &amp; observers — cards 6–7</span>'
+    : '<span class="section-badge badge-team">&#x1F465; Individual &amp; team — cards 1–5</span>';
+
+  const card = document.getElementById('card');
+  card.className = `card ${bg}`;
+
+  let html = `<div class="card-accent ${accent}"></div>`;
+  html += `<p class="card-num ${numCls}" style="margin-top:0.5rem">Card ${c.num} of 7</p>`;
+  if (isLeader) html += `<p class="leader-note">&#x1F441; For leaders &amp; observers</p>`;
+
+  if (lang!=='th') {
+    html += `<p class="card-title" style="color:${titleCol}">${c.titleEn}</p>`;
+    html += `<p class="card-body" style="color:${bodyCol}">${c.bodyEn}</p>`;
+    if (c.promptEn) html += `<p class="card-prompt" style="color:${promptCol}">${c.promptEn}</p>`;
+  }
+  if (lang==='both') html += '<hr class="divider">';
+  if (lang!=='en') {
+    html += `<p class="card-title-th" style="color:${titleCol}">${c.titleTh}</p>`;
+    html += `<p class="card-body" style="color:${bodyCol}">${c.bodyTh}</p>`;
+    if (c.promptTh) html += `<p class="card-prompt" style="color:${promptCol}">${c.promptTh}</p>`;
+  }
+
+  card.innerHTML = html;
+}
+
+render();
+</script>
+</body>
+</html>
